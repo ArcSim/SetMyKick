@@ -38,8 +38,8 @@ local TEMPLATES = {
 		{ name = "Focus + Kick (default, re-press to kick)", body = DEFAULT_MACRO },
 		{ name = "Focus + Kick (Ctrl to kick your target)",
 		  body = "#showtooltip {interrupt}\n/cast [nomod:ctrl,@focus,harm,nodead][] {interrupt}\n/focus [@focus,noexists] target\n/tm [@target,noexists][@target,dead] ~{kick}; ~{kick}" },
-		{ name = "Mouseover Kick",
-		  body = "#showtooltip {interrupt}\n/focus [@mouseover,harm,nodead,exists] mouseover\n/cast [@focus,harm,nodead] {interrupt}\n/tm [@mouseover,exists][] ~{kick}" },
+		{ name = "Auto Tab Kick (keeps your target)",
+		  body = "#showtooltip {interrupt}\n/cast [@focus,exists,nodead,harm] {interrupt}\n/stopmacro [@focus,exists,nodead,harm]\n/focus target\n/cleartarget\n/targetenemy\n/cast {interrupt}\n/target focus\n/clearfocus\n/startattack" },
 	},
 	focus = {
 		{ name = "Set focus (target)", body = SET_FOCUS_MACRO },
@@ -169,12 +169,9 @@ end
 
 -- Rewrite the managed macro so {kick} matches the chosen marker. Out of combat
 -- only (EditMacro / CreateMacro are blocked in combat).
-local function UpdateManagedMacro(verbose)
+local function UpdateManagedMacro()
 	if not (DB and DB.macroEnabled) then return end
-	if InCombatLockdown() then
-		if verbose then print(PREFIX .. "macro will update after combat.") end
-		return
-	end
+	if InCombatLockdown() then return end
 
 	local name = DB.macroName ~= "" and DB.macroName or DEFAULTS.macroName
 	local interrupt = GetMyInterruptName() or ""
@@ -185,7 +182,6 @@ local function UpdateManagedMacro(verbose)
 	local idx = GetMacroIndexByName(name)
 	if idx and idx > 0 then
 		EditMacro(idx, name, QUESTION_ICON, body)
-		if verbose then print(PREFIX .. "updated macro '" .. name .. "'.") end
 	else
 		local _, numChar = GetNumMacros()
 		if numChar and numChar >= MAX_CHARACTER_MACROS then
@@ -193,23 +189,18 @@ local function UpdateManagedMacro(verbose)
 			return
 		end
 		CreateMacro(name, QUESTION_ICON, body, true) -- per-character
-		if verbose then print(PREFIX .. "created macro '" .. name .. "'. Drag it to your bars.") end
 	end
 end
 
 -- The fixed "set focus + mark" macro. Synced if it exists; created when create=true.
-local function UpdateSetFocusMacro(create, verbose)
-	if InCombatLockdown() then
-		if verbose then print(PREFIX .. "macro will update after combat.") end
-		return
-	end
+local function UpdateSetFocusMacro(create)
+	if InCombatLockdown() then return end
 	local name = DB.setFocusName ~= "" and DB.setFocusName or DEFAULTS.setFocusName
 	local interrupt = GetMyInterruptName() or ""
 	local body = tostring(DB.setFocusTemplate or SET_FOCUS_MACRO):gsub("{interrupt}", interrupt):gsub("{kick}", tostring(DB.marker))
 	local idx = GetMacroIndexByName(name)
 	if idx and idx > 0 then
 		EditMacro(idx, name, FOCUS_ICON, body)
-		if verbose then print(PREFIX .. "updated macro '" .. name .. "'.") end
 	elseif create then
 		local _, numChar = GetNumMacros()
 		if numChar and numChar >= MAX_CHARACTER_MACROS then
@@ -217,7 +208,6 @@ local function UpdateSetFocusMacro(create, verbose)
 			return
 		end
 		CreateMacro(name, FOCUS_ICON, body, true)
-		if verbose then print(PREFIX .. "created macro '" .. name .. "'. Drag it to your bars.") end
 	end
 end
 
@@ -268,7 +258,11 @@ local function RefreshDragIcons()
 		frame.kickIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 	end
 	if frame.focusIcon then
-		frame.focusIcon:SetTexture("Interface\\Icons\\" .. FOCUS_ICON)
+		if type(FOCUS_ICON) == "number" then
+			frame.focusIcon:SetTexture(FOCUS_ICON)
+		else
+			frame.focusIcon:SetTexture("Interface\\Icons\\" .. FOCUS_ICON)
+		end
 		frame.focusIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 	end
 end
