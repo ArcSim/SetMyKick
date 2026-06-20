@@ -1,7 +1,7 @@
 local ADDON = ...
 
 --------------------------------------------------------------------------------
--- Set My Kick
+-- Set My Focus Kick
 -- Pick your interrupt (kick) raid marker, announce it to the group, and keep
 -- your interrupt macro's marker number in sync with your pick. The popup
 -- auto-shows on ready check and / or Mythic+ start.
@@ -17,25 +17,41 @@ local ADDON = ...
 -- can be blocked, in which case the button still works.
 --------------------------------------------------------------------------------
 
--- {interrupt} resolves to your spec's interrupt spell, {kick} to your marker.
+-- {interrupt} = your spec's interrupt, {kick} = your marker. The ~ before {kick}
+-- tells the game's /tm to mark only if the target has no marker yet, so re-pressing
+-- never removes or overwrites a mark. [nomod:ctrl,...] casts at your focus normally,
+-- or at your current target while holding Ctrl (to snipe something off-focus).
 local DEFAULT_MACRO =
 	"#showtooltip {interrupt}\n" ..
-	"/cast [@focus,harm,nodead] {interrupt}\n" ..
 	"/focus [@focus,noexists] target\n" ..
-	"/tm [@target,noexists][@target,dead] {kick}; {kick}"
+	"/cast [nomod:ctrl,@focus,harm,nodead][] {interrupt}\n" ..
+	"/tm [@target,noexists][@target,dead] ~{kick}; ~{kick}"
 
--- Set-focus-only macro: every press re-focuses your current target and marks it.
+-- Set focus + mark only; every press re-focuses your current target.
 local SET_FOCUS_MACRO =
 	"#showtooltip\n" ..
 	"/focus target\n" ..
-	"/tm [@target,noexists][@target,dead] {kick}; {kick}"
+	"/tm [@target,noexists][@target,dead] ~{kick}; ~{kick}"
 
--- Selectable templates for the customizable Focus+Kick macro.
+-- Two-press variant: press once to set focus, again to kick it.
+local TWO_PRESS_MACRO =
+	"#showtooltip {interrupt}\n" ..
+	"/cast [nomod:ctrl,@focus,harm,nodead][] {interrupt}\n" ..
+	"/focus [@focus,noexists] target\n" ..
+	"/tm [@target,noexists][@target,dead] ~{kick}; ~{kick}"
+
+-- Kick focus + mark, no auto-focus.
+local KICK_FOCUS_MACRO =
+	"#showtooltip {interrupt}\n" ..
+	"/cast [nomod:ctrl,@focus,harm,nodead][] {interrupt}\n" ..
+	"/tm [@target,noexists][@target,dead] ~{kick}; ~{kick}"
+
+-- Templates for the customizable Focus+Kick macro.
 local TEMPLATES = {
-	{ name = "Focus + Kick (set focus, then interrupt)", body = DEFAULT_MACRO },
+	{ name = "Focus + Kick (single press)", body = DEFAULT_MACRO },
+	{ name = "Focus + Kick (press to focus, again to kick)", body = TWO_PRESS_MACRO },
 	{ name = "Set focus only (and mark)", body = SET_FOCUS_MACRO },
-	{ name = "Kick focus only (and mark)",
-	  body = "#showtooltip {interrupt}\n/cast [@focus,harm,nodead] {interrupt}\n/tm [@target,noexists][@target,dead] {kick}; {kick}" },
+	{ name = "Kick focus only (and mark)", body = KICK_FOCUS_MACRO },
 }
 
 local DEFAULTS = {
@@ -59,7 +75,7 @@ local MARKER_NAMES = {
 	"Star", "Circle", "Diamond", "Triangle", "Moon", "Square", "Cross", "Skull",
 }
 
-local PREFIX = "|cff33ff99Set My Kick|r: "
+local PREFIX = "|cff33ff99Set My Focus Kick|r: "
 local QUESTION_ICON = "INV_Misc_QuestionMark"
 
 local DB           -- resolved at ADDON_LOADED
@@ -292,7 +308,7 @@ local function CreateUI()
 
 	local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	title:SetPoint("TOP", 0, -16)
-	title:SetText("Set My Kick")
+	title:SetText("Set My Focus Kick")
 
 	local instr = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	instr:SetPoint("TOP", title, "BOTTOM", 0, -6)
@@ -695,7 +711,7 @@ local function CreateMinimapButton()
 
 	b:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-		GameTooltip:SetText("Set My Kick")
+		GameTooltip:SetText("Set My Focus Kick")
 		GameTooltip:AddLine("Left-click: open window", 1, 1, 1)
 		GameTooltip:AddLine("Right-click: options", 1, 1, 1)
 		GameTooltip:AddLine("Drag: move button", 1, 1, 1)
@@ -711,11 +727,11 @@ end
 local function CreateSettingsPanel()
 	if settingsCategory then return end
 	local panel = CreateFrame("Frame", "SetMyKickSettingsPanel")
-	panel.name = "Set My Kick"
+	panel.name = "Set My Focus Kick"
 
 	local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("TOPLEFT", 16, -16)
-	title:SetText("Set My Kick")
+	title:SetText("Set My Focus Kick")
 
 	local desc = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
@@ -726,7 +742,7 @@ local function CreateSettingsPanel()
 	local openBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 	openBtn:SetSize(220, 26)
 	openBtn:SetPoint("TOPLEFT", desc, "BOTTOMLEFT", 0, -16)
-	openBtn:SetText("Open Set My Kick Window")
+	openBtn:SetText("Open Set My Focus Kick Window")
 	openBtn:SetScript("OnClick", function() ShowUI() end)
 
 	local macroBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -746,7 +762,7 @@ local function CreateSettingsPanel()
 	mmLabel:SetPoint("LEFT", mmCB, "RIGHT", 2, 0)
 	mmLabel:SetText("Show minimap button")
 
-	local category = Settings.RegisterCanvasLayoutCategory(panel, "Set My Kick")
+	local category = Settings.RegisterCanvasLayoutCategory(panel, "Set My Focus Kick")
 	Settings.RegisterAddOnCategory(category)
 	settingsCategory = category
 end
