@@ -337,12 +337,12 @@ local function CreateUI()
 	frame:SetToplevel(true)
 	frame:SetClampedToScreen(true)
 	frame:SetBackdrop({
-		bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		bgFile   = "Interface\\Buttons\\WHITE8X8",
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-		tile = true, tileSize = 32, edgeSize = 32,
+		tile = false, edgeSize = 32,
 		insets = { left = 11, right = 12, top = 12, bottom = 11 },
 	})
-	frame:SetBackdropColor(1, 1, 1, 0.95)
+	frame:SetBackdropColor(0.04, 0.04, 0.04, 0.9)
 
 	frame:SetMovable(true)
 	frame:EnableMouse(true)
@@ -473,13 +473,16 @@ local function CreateUI()
 	end
 
 	local function MakeDragBox(xOff, labelText, desc, key, pickup)
-		local box = CreateFrame("Button", nil, frame)
+		local box = CreateFrame("Button", nil, frame, "BackdropTemplate")
 		box:SetSize(40, 40)
 		box:SetPoint("TOP", xOff, -378)
 		box:RegisterForDrag("LeftButton")
 		box:RegisterForClicks("LeftButtonUp")
+		box:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 2 })
+		box:SetBackdropBorderColor(1, 0.82, 0, 0.9)
 		local ic = box:CreateTexture(nil, "ARTWORK")
-		ic:SetAllPoints()
+		ic:SetPoint("TOPLEFT", 2, -2)
+		ic:SetPoint("BOTTOMRIGHT", -2, 2)
 		box:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
 		frame.dragIcons[key] = ic
 		box:SetScript("OnDragStart", pickup)
@@ -564,12 +567,12 @@ function SetMyKick_ShowMacroEditor()
 	macroFrame:SetToplevel(true)
 	macroFrame:SetClampedToScreen(true)
 	macroFrame:SetBackdrop({
-		bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		bgFile   = "Interface\\Buttons\\WHITE8X8",
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-		tile = true, tileSize = 32, edgeSize = 32,
+		tile = false, edgeSize = 32,
 		insets = { left = 11, right = 12, top = 12, bottom = 11 },
 	})
-	macroFrame:SetBackdropColor(1, 1, 1, 0.95)
+	macroFrame:SetBackdropColor(0.04, 0.04, 0.04, 0.9)
 	macroFrame:SetMovable(true)
 	macroFrame:EnableMouse(true)
 	macroFrame:RegisterForDrag("LeftButton")
