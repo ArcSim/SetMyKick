@@ -32,9 +32,17 @@ local SET_FOCUS_MACRO =
 	"/focus target\n" ..
 	"/tm [@target,noexists][@target,dead] ~{kick}; ~{kick}"
 
--- Auto tab kick: kicks your focus if you have one, else tab-interrupts a casting
--- mob in front of you without losing your current target.
+-- Auto tab kick (default): tab to the nearest enemy, interrupt, return to your target.
 local AUTOTAB_MACRO =
+	"#showtooltip {interrupt}\n" ..
+	"/cleartarget\n" ..
+	"/targetenemy\n" ..
+	"/cast {interrupt}\n" ..
+	"/targetlasttarget"
+
+-- Auto tab kick (focus first): kick your focus if you have one, else tab-interrupt
+-- a casting mob without losing your current target.
+local AUTOTAB_FOCUS_MACRO =
 	"#showtooltip {interrupt}\n" ..
 	"/cast [@focus,exists,nodead,harm] {interrupt}\n" ..
 	"/stopmacro [@focus,exists,nodead,harm]\n" ..
@@ -61,7 +69,8 @@ local TEMPLATES = {
 		  body = "/focus [@mouseover,exists] mouseover\n/tm [@mouseover,exists][] ~{kick}" },
 	},
 	autotab = {
-		{ name = "Auto Tab Kick (keeps your target)", body = AUTOTAB_MACRO },
+		{ name = "Auto Tab Kick (tab to nearest)", body = AUTOTAB_MACRO },
+		{ name = "Auto Tab Kick (focus first, else tab)", body = AUTOTAB_FOCUS_MACRO },
 	},
 }
 
@@ -463,7 +472,7 @@ local function CreateUI()
 		if idx and idx > 0 then PickupMacro(idx) end
 	end
 
-	local function MakeDragBox(xOff, labelText, key, pickup)
+	local function MakeDragBox(xOff, labelText, desc, key, pickup)
 		local box = CreateFrame("Button", nil, frame)
 		box:SetSize(40, 40)
 		box:SetPoint("TOP", xOff, -378)
@@ -478,7 +487,8 @@ local function CreateUI()
 		box:SetScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 			GameTooltip:SetText(labelText)
-			GameTooltip:AddLine("Drag onto an action bar, or click then click a bar slot.", 1, 1, 1, true)
+			GameTooltip:AddLine(desc, 1, 1, 1, true)
+			GameTooltip:AddLine("Drag onto an action bar, or click then a bar slot.", 0.6, 0.6, 0.6, true)
 			GameTooltip:Show()
 		end)
 		box:SetScript("OnLeave", GameTooltip_Hide)
@@ -488,14 +498,14 @@ local function CreateUI()
 		return box
 	end
 
-	MakeDragBox(-78, "Focus + Kick", "kick", function()
+	MakeDragBox(-78, "Focus + Kick", "Interrupts your focus. First press focuses your target, then re-press to kick.", "kick", function()
 		DB.macroEnabled = true
 		PickupSlot("macroName", DEFAULTS.macroName, UpdateManagedMacro)
 	end)
-	MakeDragBox(0, "Set Focus", "focus", function()
+	MakeDragBox(0, "Set Focus", "Sets your current target as your focus and marks it.", "focus", function()
 		PickupSlot("setFocusName", DEFAULTS.setFocusName, UpdateSetFocusMacro)
 	end)
-	MakeDragBox(78, "Tab Kick", "autotab", function()
+	MakeDragBox(78, "Tab Kick", "Interrupts the nearest casting enemy, then returns to your target.", "autotab", function()
 		PickupSlot("autoTabName", DEFAULTS.autoTabName, UpdateAutoTabMacro)
 	end)
 	RefreshDragIcons()
