@@ -54,6 +54,19 @@ local AUTOTAB_FOCUS_MACRO =
 	"/clearfocus\n" ..
 	"/startattack"
 
+-- Auto tab kick (mouseover override): kick your mouseover or focus if valid, else
+-- tab-interrupt without losing your current target.
+local AUTOTAB_MOUSEOVER_MACRO =
+	"#showtooltip\n" ..
+	"/cast [@mouseover,harm,nodead][@focus,harm,nodead,exists] {interrupt}\n" ..
+	"/stopmacro [@mouseover,harm,nodead][@focus,harm,nodead,exists]\n" ..
+	"/focus target\n" ..
+	"/cleartarget\n" ..
+	"/targetenemy\n" ..
+	"/cast {interrupt}\n" ..
+	"/target focus\n" ..
+	"/clearfocus"
+
 -- Templates per macro slot: the editor shows the set for whichever macro is selected.
 local TEMPLATES = {
 	kick = {
@@ -71,6 +84,7 @@ local TEMPLATES = {
 	autotab = {
 		{ name = "Auto Tab Kick (tab to nearest)", body = AUTOTAB_MACRO },
 		{ name = "Auto Tab Kick (focus first, else tab)", body = AUTOTAB_FOCUS_MACRO },
+		{ name = "Auto Tab Kick (mouseover or focus, else tab)", body = AUTOTAB_MOUSEOVER_MACRO },
 	},
 }
 
@@ -670,17 +684,16 @@ function SetMyKick_ShowMacroEditor()
 	editLabel:SetPoint("TOPLEFT", 24, -50)
 	editLabel:SetText("Editing:")
 
-	local function SlotText() return SLOT_CFG[editorSlot].label end
 	local slotDrop = CreateFrame("DropdownButton", nil, macroFrame, "WowStyle1DropdownTemplate")
 	slotDrop:SetSize(160, 22)
 	slotDrop:SetPoint("LEFT", editLabel, "RIGHT", 10, 0)
+	local function SlotIsSelected(sk) return editorSlot == sk end
+	local function SlotSetSelected(sk) editorSlot = sk; C_Timer.After(0, ReloadFields) end
 	slotDrop:SetupMenu(function(dropdown, root)
 		for _, key in ipairs(SLOT_ORDER) do
-			local sk = key
-			root:CreateButton(SLOT_CFG[sk].label, function() editorSlot = sk; slotDrop:SetText(SlotText()); C_Timer.After(0, ReloadFields) end)
+			root:CreateRadio(SLOT_CFG[key].label, SlotIsSelected, SlotSetSelected, key)
 		end
 	end)
-	slotDrop:SetText(SlotText())
 
 	-- Pick an existing macro to manage; loads its name + body so you can add {kick}.
 	local macroDrop = CreateFrame("DropdownButton", nil, macroFrame, "WowStyle1DropdownTemplate")
