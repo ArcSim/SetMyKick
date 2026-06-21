@@ -535,7 +535,7 @@ local function CreateUI()
 	return frame
 end
 
-local function ShowUI()
+local function ShowUI(fromEvent)
 	if InCombatLockdown() then
 		print(PREFIX .. "in combat, not opening (this is an out-of-combat tool).")
 		return
@@ -549,7 +549,10 @@ local function ShowUI()
 	SyncMacros()
 	frame:Show()
 	frame:Raise()
-	if DB.autoAnnounce then Announce() end
+	-- Auto-announce only when YOU opened it (a click or /smk). On a trigger like the
+	-- ready check (fromEvent), skip it: an automated SendChatMessage inside an instance
+	-- is blocked. Your marker/Announce clicks are hardware events and always send.
+	if DB.autoAnnounce and not fromEvent then Announce() end
 end
 
 -- Global opener so ArcUI (or any addon) can open the window.
@@ -907,7 +910,7 @@ ev:SetScript("OnEvent", function(_, event, arg1)
 		CreateSettingsPanel()
 		print(PREFIX .. "loaded. /smk to open.")
 	elseif event == "READY_CHECK" then
-		if DB and DB.showOnReadyCheck and InMythicDungeon() then ShowUI() end
+		if DB and DB.showOnReadyCheck and InMythicDungeon() then ShowUI(true) end
 	elseif event == "PLAYER_REGEN_ENABLED" then
 		-- Catch up any macro edits deferred from combat.
 		SyncMacros()
